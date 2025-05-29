@@ -39,6 +39,12 @@ export default {
     };
   },
   mounted() {
+    if (window.getDetailIsClickAc()) {
+      window.dataLayer.push({
+        event: "S_PL"
+      });
+    }
+
     window.location.hostname.indexOf("s.")===0 && (this.subdomain = true);
     this.hide = false;
 
