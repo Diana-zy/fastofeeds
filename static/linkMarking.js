@@ -39,8 +39,7 @@ function getDetailIsClickAc() {
   return false;
 }
 
-window.addEventListener("beforeunload", () => {
-  if (window.done) return;
+window.addEventListener("blur", () => {
   const activeElement = document.activeElement;
   const src = activeElement.getAttribute("src");
   if (src && src.includes("afs/ads?")) {

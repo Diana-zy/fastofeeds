@@ -108,6 +108,11 @@ export default {
         container: "afscontainer1",
         number: 8,
         adLoadedCallback: (loaded, e) => {
+          if (window.getDetailIsClickAc()) {
+            window.dataLayer.push({
+              event: "C_AR_C"
+            });
+          }
           if (e) {
             // eslint-disable-next-line no-undef
             dataLayer.push({ event: "C_AR" });
