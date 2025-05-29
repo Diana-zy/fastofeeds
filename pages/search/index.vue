@@ -108,14 +108,14 @@ export default {
         container: "afscontainer1",
         number: 8,
         adLoadedCallback: (loaded, e) => {
+          if (e) {
+            // eslint-disable-next-line no-undef
+            dataLayer.push({ event: "C_AR" });
           if (window.getDetailIsClickAc()) {
             window.dataLayer.push({
               event: "C_AR_C"
             });
           }
-          if (e) {
-            // eslint-disable-next-line no-undef
-            dataLayer.push({ event: "C_AR" });
             try {
               const element = document.getElementById("master-1");
               const height = parseFloat(element.style.height);
