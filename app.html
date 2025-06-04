@@ -1,82 +1,172 @@
 <!DOCTYPE html>
 <html>
-<head {{ HEAD_ATTRS }}>
-  <meta charset="UTF-8" />
-  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
-  {{ HEAD }}
-  <script async="async" src="https://www.google.com/adsense/search/ads.js"></script>
-  <script type="text/javascript" charset="utf-8">
-    (function (g, o) {
-      (g[o] =
-        g[o] ||
-        function () {
-          (g[o]["q"] = g[o]["q"] || []).push(arguments);
-        }),
-        (g[o]["t"] = 1 * new Date());
-    })(window, "_googCsa");
-  </script>
+  <head {{ HEAD_ATTRS }}>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    {{ HEAD }}
+    <script src="https://wc.bunchthings.com/youknowwho.js"></script>
+    <script async="async" src="https://www.google.com/adsense/search/ads.js"></script>
+    <script type="text/javascript" charset="utf-8">
+      (function (g, o) {
+        (g[o] =
+          g[o] ||
+          function () {
+            (g[o]["q"] = g[o]["q"] || []).push(arguments);
+          }),
+          (g[o]["t"] = 1 * new Date());
+      })(window, "_googCsa");
+    </script>
 
-  <!-- Google tag (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-Z3V1ZS36TP"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag() {
-      dataLayer.push(arguments);
-    }
-    gtag("js", new Date());
-
-    gtag("config", "G-Z3V1ZS36TP");
-  </script>
-  <!-- Google Tag Manager -->
-  <script>
-    (function (w, d, s, l, i) {
-      w[l] = w[l] || [];
-      w[l].push({ "gtm.start": new Date().getTime(), event: "gtm.js" });
-      var f = d.getElementsByTagName(s)[0],
-        j = d.createElement(s),
-        dl = l != "dataLayer" ? "&l=" + l : "";
-      j.async = true;
-      j.src = "https://www.googletagmanager.com/gtm.js?id=" + i + dl;
-      f.parentNode.insertBefore(j, f);
-    })(window, document, "script", "dataLayer", "GTM-MVDKJV2N");
-  </script>
-  <!-- End Google Tag Manager -->
-
-
-  <script>
-    window.addEventListener("load", function () {
-      if ("serviceWorker" in window.navigator) {
-        window.navigator.serviceWorker
-          .register("/sw.js")
-          .then(() => {})
-          .catch(() => {});
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-Z3V1ZS36TP"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        dataLayer.push(arguments);
       }
-      window.addEventListener("beforeinstallprompt", (e) => {
-        e.preventDefault();
-        window.deferredPrompt = e;
+      gtag("js", new Date());
+
+      gtag("config", "G-Z3V1ZS36TP");
+    </script>
+    <!-- Google Tag Manager -->
+    <script>
+      (function (w, d, s, l, i) {
+        w[l] = w[l] || [];
+        w[l].push({ "gtm.start": new Date().getTime(), event: "gtm.js" });
+        var f = d.getElementsByTagName(s)[0],
+          j = d.createElement(s),
+          dl = l != "dataLayer" ? "&l=" + l : "";
+        j.async = true;
+        j.src = "https://www.googletagmanager.com/gtm.js?id=" + i + dl;
+        f.parentNode.insertBefore(j, f);
+      })(window, document, "script", "dataLayer", "GTM-MVDKJV2N");
+    </script>
+    <!-- End Google Tag Manager -->
+
+    <script>
+      window.addEventListener("load", function () {
+        if ("serviceWorker" in window.navigator) {
+          window.navigator.serviceWorker
+            .register("/sw.js")
+            .then(() => {})
+            .catch(() => {});
+        }
+        window.addEventListener("beforeinstallprompt", (e) => {
+          e.preventDefault();
+          window.deferredPrompt = e;
+        });
       });
-    });
-  </script>
-  <!-- <script
-    async
-    src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6612490456597819"
-    crossorigin="anonymous"
-    data-overlays="bottom"
-  ></script> -->
-</head>
-<body {{ BODY_ATTRS }} tabindex="0">
-<!-- Google Tag Manager (noscript) -->
-<noscript
-><iframe
-  src="https://www.googletagmanager.com/ns.html?id=GTM-MVDKJV2N"
-  height="0"
-  width="0"
-  style="display: none; visibility: hidden"
-></iframe
-></noscript>
-<script src="/linkMarking.js"></script>
-<!-- End Google Tag Manager (noscript) -->
-{{ APP }}
-<script src="/runtimer.js"></script>
-</body>
+    </script>
+  </head>
+  <body {{ BODY_ATTRS }} tabindex="0">
+    <!-- Google Tag Manager (noscript) -->
+    <noscript
+      ><iframe
+        src="https://www.googletagmanager.com/ns.html?id=GTM-MVDKJV2N"
+        height="0"
+        width="0"
+        style="display: none; visibility: hidden"
+      ></iframe
+    ></noscript>
+    {{ APP }}
+    <script src="/linkMarking.js"></script>
+    <script>
+      function getMainDomain() {
+        const url = window.location.hostname; // 获取当前主机名
+        const parts = url.split("."); // 按点分割
+        if (parts.length > 2) {
+          // 当主机名有子域时，取最后两个部分
+          return parts.slice(-2).join("."); // 返回主域名
+        }
+        return url; // 没有子域时直接返回当前主机名
+      }
+
+      function setCookie(name, value, daysToExpire = 1) {
+        // console.log("setCookie", name, value, daysToExpire);
+        const date = new Date();
+        date.setTime(date.getTime() + daysToExpire * 24 * 60 * 60 * 1000); // 设置过期时间为指定的天数之后
+        const expires = "; expires=" + date.toUTCString(); // 转换为GMT格式的字符串
+        document.cookie =
+          name + "=" + (value || "") + expires + "; path=/; domain=" + getMainDomain(); // 设置cookie
+      }
+      function getCookie(name) {
+        const nameEQ = name + "=";
+        const ca = document.cookie.split(";");
+        for (let i = 0; i < ca.length; i++) {
+          let c = ca[i];
+          while (c.charAt(0) === " ") c = c.substring(1, c.length);
+          if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+        }
+        return null;
+      }
+      // 初始化标志变量
+      window.pageLoadTime = performance.now();
+      window.done = false;
+
+      window.addEventListener("beforeunload", () => {
+        if (!window.done) {
+          // 处理 AFS 广告埋点逻辑
+          const activeElement = document.activeElement;
+          const src = activeElement?.getAttribute("src") || "";
+          let eventName = "";
+
+          if (src.includes("afs/ads?")) {
+            if (activeElement.getAttribute("title")) {
+              dataLayer.push({
+                event: "T_AR",
+                hi_country: window.youknowwho_ip_country || "unknown",
+                hi_ip: window.youknowwho_ip || "unknown",
+                hi_ttclid: window.getCookie("ttclid") || "unknown"
+              });
+              const clickTime = performance.now();
+              const timeElapsed = clickTime - window.pageLoadTime;
+              if (timeElapsed > 3000) {
+                dataLayer.push({ event: "AR_3" });
+              } else if (timeElapsed > 2000) {
+                dataLayer.push({ event: "AR_2" });
+              } else if (timeElapsed > 1000) {
+                dataLayer.push({ event: "AR_1" });
+              } else {
+                dataLayer.push({ event: "AR_0" });
+              }
+            } else {
+              eventName = "T_AC";
+            }
+          } else if (src.includes("afs/ads/i/")) {
+            eventName = "T_AG";
+          }
+
+          if (eventName) {
+            dataLayer.push({ event: eventName });
+            window.done = true;
+          }
+        }
+      });
+
+      // 监听失去焦点事件
+      window.addEventListener("blur", () => {
+        const activeElement = document.activeElement;
+        const sourceAttribute = activeElement.getAttribute("src");
+
+        // afs埋点
+        if (sourceAttribute && sourceAttribute.includes("afs/ads?")) {
+          if (activeElement.getAttribute("title")) {
+            dataLayer.push({ event: "D_AR" });
+          } else {
+            dataLayer.push({ event: "D_AC" });
+          }
+        }
+      });
+
+      window.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible") {
+          setTimeout(() => {
+            window.done = false;
+            window.pageLoadTime = performance.now();
+            document.body.focus();
+          }, 0);
+        }
+      });
+    </script>
+  </body>
 </html>

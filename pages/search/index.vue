@@ -4,16 +4,6 @@
     <main class="main">
       <div id="relatedsearches1"> </div>
       <div id="afscontainer1"> </div>
-      <!-- <google-ad-preload
-        v-if="noAd"
-        title="Non-search result Ad"
-        ad-slot="6864443826"
-      ></google-ad-preload>
-      <google-ad-preload
-        v-if="noAd2"
-        title="Non-search result Ad"
-        ad-slot="5519572568"
-      ></google-ad-preload> -->
       <div id="relatedstyle2"> </div>
       <div id="relatedsearches2"> </div>
       <h3 class="title-h3">Web Results</h3>
@@ -45,7 +35,7 @@ export default {
       });
     }
 
-    window.location.hostname.indexOf("s.")===0 && (this.subdomain = true);
+    window.location.hostname.indexOf("s.") === 0 && (this.subdomain = true);
     this.hide = false;
 
     this.input = this.$route.query.query || "";
@@ -110,12 +100,17 @@ export default {
         adLoadedCallback: (loaded, e) => {
           if (e) {
             // eslint-disable-next-line no-undef
-            dataLayer.push({ event: "C_AR" });
-          if (window.getDetailIsClickAc()) {
             window.dataLayer.push({
-              event: "C_AR_C"
+              event: "C_AR",
+              hi_country: window.youknowwho_ip_country || "unknown",
+              hi_ip: window.youknowwho_ip || "unknown",
+              hi_ttclid: window.getCookie("ttclid") || "unknown"
             });
-          }
+            if (window.getDetailIsClickAc()) {
+              window.dataLayer.push({
+                event: "C_AR_C"
+              });
+            }
             try {
               const element = document.getElementById("master-1");
               const height = parseFloat(element.style.height);
