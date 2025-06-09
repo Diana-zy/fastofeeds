@@ -94,6 +94,14 @@
                 hi_ip: window.youknowwho_ip || "unknown",
                 hi_ttclid: window.getCookie("ttclid") || "unknown"
               });
+              if(getDetailIsClickAcTimes()){
+                dataLayer.push({
+                  event: "T_AR_FROM_TAC",
+                  hi_country: window.youknowwho_ip_country || "unknown",
+                  hi_ip: window.youknowwho_ip || "unknown",
+                  hi_ttclid: window.getCookie("ttclid") || "unknown"
+                });
+              }
               const clickTime = performance.now();
               const timeElapsed = clickTime - window.pageLoadTime;
               if (timeElapsed > 3000) {
@@ -107,6 +115,9 @@
               }
             } else {
               eventName = "T_AC";
+              if(window.location.pathname.includes('/detail/') || window.location.pathname.includes('/detail2/')){
+                window.setCookie("hi_act_chain_click_times", 1);
+              }
             }
           } else if (src.includes("afs/ads/i/")) {
             eventName = "T_AG";
