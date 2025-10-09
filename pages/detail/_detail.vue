@@ -15,10 +15,14 @@
         preload
       />
       <!-- eslint-disable vue/no-v-html -->
-      <div class="news-detail" v-html="newInfo.content"></div>
+      <div class="news-detail">
+        <template v-for="(item, index) in contentItems">
+          <div v-if="item.type === 'content'" :key="`content-${index}`" v-html="item.content"></div>
+          <div v-else id="relatedsearches2" :key="`relatedsearch-${index}`"></div>
+        </template>
+      </div>
       <!--eslint-enable-->
     </article>
-    <div id="relatedstyle2"> </div>
     <Footer :lang="newInfo.language" />
   </div>
 </template>
@@ -37,6 +41,7 @@ export default {
         }
       })
     ]);
+    data.content = data.content.replace(/font-family:\s*['"]?宋体['"]?;/g, "");
     data.content = data.content.replace(/<\/h4><p><br><br>|<br><br><\/p><h4>/g, (match) => {
       return match.includes("</h4><p>") ? "</h4><p>" : "</p><h4>";
     });
@@ -44,7 +49,9 @@ export default {
   },
   data() {
     return {
-      channelId: ""
+      channelId: "",
+      splitTextCount: 400,
+      isAdAdded: false
     };
   },
   head() {
@@ -52,7 +59,7 @@ export default {
       htmlAttrs: {
         lang: this.newInfo.language
       },
-      title: this.newInfo.name + " - Worldoinfo",
+      title: this.newInfo.name + " - Fastofeeds",
       meta: [
         {
           hid: "description",
@@ -77,7 +84,7 @@ export default {
         {
           hid: "og:url",
           property: "og:url",
-          content: `https://worldoinfo.com/detail/${this.newInfo.path}/`
+          content: `https://Fastofeeds.com/detail/${this.newInfo.path}/`
         },
         {
           hid: "og:locale",
@@ -97,7 +104,52 @@ export default {
       ]
     };
   },
+  computed: {
+    contentItems() {
+      const self = this;
+      const parts = this.newInfo.content.split(/(<p[^>]*>.*?<\/p>)/gs);
+      let charCount = 0;
+      const items = [];
+
+      parts.forEach((part, index) => {
+        // 如果是最后一个段落，并且广告还没有添加，则插入到倒数第二段
+        if (parts.length - 1 === index && !self.isAdAdded) {
+          items.push({
+            type: "ad"
+          });
+          self.isAdAdded = true;
+        }
+
+        if (!part.trim()) return; // 跳过空字符串
+
+        // 添加内容
+        items.push({
+          type: "content",
+          content: part
+        });
+
+        // 如果不是p标签，不计算字符数和插入广告
+        if (!part.startsWith("<p")) return;
+
+        if (self.isAdAdded) return;
+        // 计算纯文本长度
+        const textContent = part.replace(/<[^>]+>/g, "");
+        charCount += textContent.length;
+
+        if (charCount >= self.splitTextCount) {
+          items.push({
+            type: "ad"
+          });
+          // 是否已经push过广告
+          self.isAdAdded = true;
+        }
+      });
+
+      return items;
+    }
+  },
   mounted: function () {
+    window.setCookie("mounted", 1);
     // 获取 URL 查询参数
     const searchParams = new URLSearchParams(window.location.search);
     // AdSense 配置参数
@@ -105,7 +157,6 @@ export default {
       this.channelId = searchParams.get("channel");
     } else {
       this.channelId = this.newInfo.channel || "";
-      console.log("channelId", this.channelId, this.newInfo);
       if (this.channelId !== "") {
         searchParams.set("channel", this.channelId);
         const newUrl = `${window.location.origin}${
@@ -116,17 +167,23 @@ export default {
     }
 
     setTimeout(() => {
-      this.addAdSenseScript();
+      if (this.newInfo.no_entry !== 1) {
+        this.addAdSenseScript();
+      }
     }, 0);
   },
   methods: {
     addAdSenseScript() {
-      console.log("addAdSenseScript", this.newInfo.terms);
       // 获取 URL 查询参数
       const searchParams = new URLSearchParams(window.location.search);
-      const clickId = searchParams.has("click_id") ? searchParams.get("click_id") : "";
       let terms = searchParams.has("terms") ? searchParams.get("terms") : "";
       terms = terms.replace(/[，]/g, ",");
+      // 获取Url携带的headline参数
+      let headline = searchParams.has("headline") ? searchParams.get("headline") : "";
+      if (headline === "{title}" || headline === "{{ad_title}}") {
+        headline = "";
+      }
+
       const paramKeys = [];
       // 遍历查询参数并将其添加到 paramKeys 数组中
       for (const param of searchParams) {
@@ -134,72 +191,103 @@ export default {
       }
       const ignoredPageParams = paramKeys.join(",");
 
-      let adSenseConfig = {
+      const channelId = window.getParam("channel");
+      const hiSource = window.getParam("hi_source");
+      const hiPc = window.getParam("hi_pc");
+      const resultsPageBaseUrl = window.getResultsPageUrl({
+        channel: channelId,
+        from: "detail",
+        hi_source: hiSource,
+        hi_pc: hiPc
+      });
+      const adSenseConfig = {
         channel: this.channelId,
         pubId: "partner-pub-6612490456597819",
         styleId: "7767580164",
         adsafe: "low",
         ignoredPageParams,
         relatedSearchTargeting: "content",
-        resultsPageBaseUrl: `${window.location.origin}/search/?afs&channel=${this.channelId}${
-          clickId && `&click_id=${clickId}`
-        }`,
+        resultsPageBaseUrl,
         resultsPageQueryParam: "query",
         terms: terms || this.newInfo.terms,
-        referrerAdCreative: terms || this.newInfo.referrer_ad_creative,
+        referrerAdCreative: headline || terms || this.newInfo.referrer_ad_creative,
         ivt: false,
         adtest: "off"
       };
-      if (window.location.hostname.indexOf("s.") === 0) {
-        adSenseConfig = {
-          channel: this.channelId,
-          pubId: "partner-pub-6612490456597819",
-          styleId: "7767580164",
-          adsafe: "low",
-          ignoredPageParams,
-          relatedSearchTargeting: "query",
-          query: terms ? terms.split(",")[0] : this.newInfo.terms.split(",")[0],
-          ivt: false,
-          resultsPageBaseUrl: `${window.location.origin}/search/?afs&channel=${this.channelId}${
-            clickId && `&click_id=${clickId}`
-          }`,
-          resultsPageQueryParam: "query"
-        };
-      }
+
       // 初始化 _googCsa 并加载相关搜索广告
       // eslint-disable-next-line no-undef
-      _googCsa("relatedsearch", adSenseConfig, {
-        container: "relatedsearches1", // 广告容器 ID
-        relatedSearches: 10, // 相关搜索广告数量
-        adLoadedCallback: function (loaded, response, isExperimentVariant, callbackOptions) {
-          console.log("adLoadedCallback", loaded, response, isExperimentVariant, callbackOptions);
-          if (response) {
-            window.pushEventParamsToGtm("C_AC");
-            try {
-              let numberOfKeys = 0;
-              let concatenatedKeys = "miss";
-              if (callbackOptions.termPositions) {
-                const keys = Object.keys(callbackOptions.termPositions);
-                numberOfKeys = keys.length;
-                concatenatedKeys = keys.join(",");
-              }
-              const element = document.getElementById("master-1");
-              const height = parseFloat(element.style.height);
-              const result = Math.round(height / 105);
+      _googCsa(
+        "relatedsearch",
+        adSenseConfig,
+        {
+          container: "relatedsearches1", // 广告容器 ID
+          relatedSearches: 5, // 相关搜索广告数量
+          adLoadedCallback: function (loaded, response, isExperimentVariant, callbackOptions) {
+            if (response) {
+              window.trackEventToPixel("D_C_AC");
+              window.pushEventParamsToGtm("C_AC");
+              window.setCookie("query_ad", 1);
+              try {
+                let numberOfKeys = 0;
+                let concatenatedKeys = "miss";
+                if (callbackOptions.termPositions) {
+                  const keys = Object.keys(callbackOptions.termPositions);
+                  numberOfKeys = keys.length;
+                  concatenatedKeys = keys.join(",");
+                }
+                const element = document.getElementById("master-1");
+                const height = parseFloat(element.style.height);
+                const result = Math.round(height / 105);
 
+                // eslint-disable-next-line no-undef
+                dataLayer.push({
+                  event: "C_AC_IN",
+                  num: result,
+                  queryNum: 5,
+                  key1: numberOfKeys,
+                  key2: concatenatedKeys
+                }); // 事件推送到 dataLayer
+              } catch (e) {
+                console.log(e);
+              }
+            }
+          }
+        },
+        {
+          container: "relatedsearches2", // 广告容器 ID
+          relatedSearches: 5, // 相关搜索广告数量
+          adLoadedCallback: function (loaded, response, isExperimentVariant, callbackOptions) {
+            if (response) {
               // eslint-disable-next-line no-undef
-              dataLayer.push({
-                event: "C_AC_IN",
-                num: result,
-                key1: numberOfKeys,
-                key2: concatenatedKeys
-              }); // 事件推送到 dataLayer
-            } catch (e) {
-              console.log(e);
+              window.pushEventParamsToGtm("C_AC_SECOND"); // 事件推送到 dataLayer
+              try {
+                let numberOfKeys = 0;
+                let concatenatedKeys = "miss";
+                if (callbackOptions.termPositions) {
+                  const keys = Object.keys(callbackOptions.termPositions);
+                  numberOfKeys = keys.length;
+                  concatenatedKeys = keys.join(",");
+                }
+                const element = document.getElementById("relatedsearches2");
+                const height = parseFloat(element.clientHeight);
+                const result = Math.round(height / 105);
+
+                // eslint-disable-next-line no-undef
+                dataLayer.push({
+                  event: "C_AC_IN_SECOND",
+                  queryNum: 5,
+                  num: result,
+                  key1: numberOfKeys,
+                  key2: concatenatedKeys
+                }); // 事件推送到 dataLayer
+              } catch (e) {
+                console.log(e);
+              }
             }
           }
         }
-      });
+      );
     }
   }
 };

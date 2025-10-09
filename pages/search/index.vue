@@ -1,11 +1,9 @@
 <template>
-  <div v-show="!hide" class="page">
-    <Header v-if="!subdomain" />
+  <div class="page">
+    <Header />
     <main class="main">
-      <div id="relatedsearches1"> </div>
       <div id="afscontainer1"> </div>
-      <div id="relatedstyle2"> </div>
-      <div id="relatedsearches2"> </div>
+      <div id="relatedsearches1"> </div>
       <h3 class="title-h3">Web Results</h3>
       <section class="news-box-3">
         <news-item-3 v-for="(item, i) in news" :key="i" :item="item"> </news-item-3>
@@ -20,32 +18,51 @@ export default {
   data() {
     return {
       news: [], // 新闻列表
-      input: "", // 搜索输入
-      channelId: "",
-      subdomain: false,
-      hide: true,
-      noAd: false,
-      noAd2: false
+      input: "" // 搜索输入
     };
   },
   mounted() {
+    if (
+      !window.getCookie("first") &&
+      window.getCookie("mounted") &&
+      window.getCookie("query_ad") &&
+      window.getCookie("click_ad")
+    ) {
+      window.setCookie("first", 999);
+    }
+
     if (window.getDetailIsClickAc()) {
       window.dataLayer.push({
         event: "S_PL"
       });
     }
 
-    window.location.hostname.indexOf("s.") === 0 && (this.subdomain = true);
-    this.hide = false;
-
     this.input = this.$route.query.query || "";
-    this.input && this.addAdSense();
+    if (this.input) {
+      if (window.isLoadAd === true) {
+        this.addAdSense();
+      } else {
+        window.addEventListener("loadAd", () => {
+          this.addAdSense();
+        });
+      }
+    }
     this.input && this.searchNews();
   },
   methods: {
     addAdSense() {
       setTimeout(() => {
-        this.addAdSenseScript();
+        const buffer = window.getCookie("first");
+        if (buffer && buffer !== "ok") {
+          window.trackEventToPixel("Q_AR");
+          window.pushEventParamsToGtm("Q_AR");
+          this.addAdSenseScript();
+          if (Number(buffer) > 1) {
+            window.setCookie("first", Number(buffer) - 1);
+          } else {
+            window.setCookie("first", "ok");
+          }
+        }
       }, 0);
     },
     async searchNews() {
@@ -62,13 +79,17 @@ export default {
     },
     addAdSenseScript() {
       const queryString = this.input;
-      const searchParams = new URLSearchParams(window.location.search);
 
-      // 获取 URL 查询参数的工具函数
-      const getParam = (key) => (searchParams.has(key) ? searchParams.get(key) : "");
-
-      const from = getParam("from");
-      const channelId = getParam("channel");
+      const channelId = window.getParam("channel");
+      const hiSource = window.getParam("hi_source");
+      const hiPc = window.getParam("hi_pc");
+      const from = window.getParam("from");
+      const resultsPageBaseUrl = window.getResultsPageUrl({
+        channel: channelId,
+        from,
+        hi_source: hiSource,
+        hi_pc: hiPc
+      });
 
       // 配置 AdSense 参数
       const adSenseConfig = {
@@ -78,9 +99,7 @@ export default {
         styleId: "7767580164",
         adsafe: "low",
         ivt: false,
-        resultsPageBaseUrl: `${window.location.origin}/search/?afs&channel=${channelId}${
-          from ? `&from=${from}` : ""
-        }`,
+        resultsPageBaseUrl,
         resultsPageQueryParam: "query"
       };
 
@@ -99,6 +118,7 @@ export default {
         number: 8,
         adLoadedCallback: (loaded, e) => {
           if (e) {
+            window.trackEventToPixel("C_AR");
             window.pushEventParamsToGtm("C_AR");
             if (window.getDetailIsClickAc()) {
               window.dataLayer.push({
@@ -115,10 +135,6 @@ export default {
               console.error(error);
             }
           } else {
-            this.noAd = true;
-            setTimeout(() => {
-              this.noAd2 = true;
-            }, 50);
             // eslint-disable-next-line no-undef
             dataLayer.push({ event: "FF_AR", query: queryString });
           }
@@ -126,26 +142,11 @@ export default {
       };
 
       // 根据来源配置 rsblock1
-      const rsblock1 = (() => {
-        const baseConfig = {
-          container: "",
-          relatedSearches: 0,
-          adLoadedCallback: adLoadedCallback("C_AC", { query: queryString })
-        };
-
-        // if (from === "home" || from === "content") {
-        //   baseConfig.container = this.subdomain ? "relatedsearches2" : "relatedsearches1";
-        //   baseConfig.relatedSearches = this.subdomain ? 5 : 4;
-        // } else {
-        //   baseConfig.container = "relatedstyle2";
-        //   baseConfig.relatedSearches = 6;
-        // }
-
-        baseConfig.container = "relatedstyle2";
-        baseConfig.relatedSearches = 6;
-
-        return baseConfig;
-      })();
+      const rsblock1 = {
+        container: "relatedsearches1",
+        relatedSearches: 5,
+        adLoadedCallback: adLoadedCallback("C_AC", { query: queryString })
+      };
 
       // 加载 Google AdSense
       // eslint-disable-next-line no-undef

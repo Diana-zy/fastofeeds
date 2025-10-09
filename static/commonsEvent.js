@@ -39,16 +39,6 @@ function getDetailIsClickAc() {
   return false;
 }
 
-// eslint-disable-next-line no-unused-vars
-function getDetailIsClickAcTimes() {
-  const times = getCookie("hi_act_chain_click_times");
-  if (Number(times) >= 1) {
-    setCookie("hi_act_chain_click_times", Number(times) - 1);
-    return true;
-  }
-  return false;
-}
-
 window.addEventListener("blur", () => {
   const activeElement = document.activeElement;
   const src = activeElement.getAttribute("src");
@@ -67,6 +57,7 @@ window.addEventListener("blur", () => {
 
 // eslint-disable-next-line no-unused-vars
 function pushEventParamsToGtm(eventName) {
+  window.dataLayer = window.dataLayer || [];
   const searchParams = new URLSearchParams(window.location.search);
   const ttclid = searchParams.get("ttclid");
   window.dataLayer.push({

@@ -14,16 +14,6 @@
           <i v-show="input != ''" class="icon-clear" @click="clear"></i>
           <i class="icon-search" @click="search"></i>
         </div>
-        <!-- <div class="rec-keywords">
-          <p
-            v-for="(item, i) in recKeywords"
-            :key="i"
-            @click="handleSearchRecKeyword(item)"
-            class="keyword-item"
-          >
-            {{ item }}
-          </p>
-        </div> -->
       </section>
 
       <section v-swiper:mySwiper="swiperOption" class="swiper-box">
