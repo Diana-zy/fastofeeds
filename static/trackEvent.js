@@ -221,7 +221,12 @@ function trackEventToPixel(eventKey) {
     } else if (source === "pinterest") {
       window.pintrk?.("track", eventName);
     } else if (source === "facebook") {
-      window.fbq?.("track", eventName);
+      eventName === "Purchase"
+        ? window.fbq?.("track", eventName, {
+            currency: "USD",
+            value: 1
+          })
+        : window.fbq?.("track", eventName);
     }
   }
 }
