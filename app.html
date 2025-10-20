@@ -242,10 +242,10 @@
 
           if (src.includes("afs/ads?")) {
             if (activeElement.getAttribute("title")) {
-              eventName = "T_AR";
+              // eventName = "T_AR";
               const searchParams = new URLSearchParams(window.location.search);
               const ttclid = searchParams.get("ttclid");
-              // window.trackEventToPixel("T_AR");
+              window.trackEventToPixel("T_AR");
               pushEventToGTM('T_AR',{
                 hi_country: window.youknowwho_ip_country || "unknown",
                 hi_ip: window.youknowwho_ip || "unknown",
