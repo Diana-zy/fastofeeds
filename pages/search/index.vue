@@ -39,13 +39,13 @@ export default {
 
     this.input = this.$route.query.query || "";
     if (this.input) {
-      if (window.isLoadAd === true) {
+      // if (window.isLoadAd === true) {
         this.addAdSense();
-      } else {
-        window.addEventListener("loadAd", () => {
-          this.addAdSense();
-        });
-      }
+      // } else {
+      //   window.addEventListener("loadAd", () => {
+      //     this.addAdSense();
+      //   });
+      // }
     }
     this.input && this.searchNews();
   },

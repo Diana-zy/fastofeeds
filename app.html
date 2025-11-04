@@ -30,23 +30,23 @@
         // });
 
         // 判断是否切换ip地址
-        const event = new Event("loadAd"); // 创建标准事件对象
-        let buffer = window.getCookie("city");
-        if (!window.getCookie("changeIp")) {
-          if (!buffer) {
-            window.setCookie("city", window.city || "unknown");
-            window.isLoadAd = true;
-            window.dispatchEvent(event);
-          } else {
-            if (window.city === buffer) {
-              window.isLoadAd = true;
-              window.dispatchEvent(event);
-            } else {
-              window.isLoadAd = false;
-              window.setCookie("changeIp", "yes");
-            }
-          }
-        }
+        // const event = new Event("loadAd"); // 创建标准事件对象
+        // let buffer = window.getCookie("city");
+        // if (!window.getCookie("changeIp")) {
+        //   if (!buffer) {
+        //     window.setCookie("city", window.city || "unknown");
+        //     window.isLoadAd = true;
+        //     window.dispatchEvent(event);
+        //   } else {
+        //     if (window.city === buffer) {
+        //       window.isLoadAd = true;
+        //       window.dispatchEvent(event);
+        //     } else {
+        //       window.isLoadAd = false;
+        //       window.setCookie("changeIp", "yes");
+        //     }
+        //   }
+        // }
       };
     </script>
     <script async="async" src="https://www.google.com/adsense/search/ads.js"></script>
