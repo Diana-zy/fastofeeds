@@ -20,7 +20,7 @@ export default {
       const path = await pathData.json();
       const categoryPaths = path.data.category.map((item) => `/category/${item}/`);
       const detailPaths = path.data.detail.map((item) => `/detail/${item}/`);
-      const urls = [...categoryPaths, ...detailPaths];
+      const urls = [...categoryPaths, ...detailPaths, "/detail3/1/"];
       return urls;
     }
   },
@@ -68,7 +68,7 @@ export default {
         property: "og:site_name",
         content: "Fastofeeds"
       }
-    ],
+    ]
     // link: [{ rel: "icon", type: "image/x-icon", href: "/favicon.ico" }]
   },
   image: {
@@ -101,7 +101,6 @@ export default {
         "We are committed to delivering you the latest developments in various fields, including politics, economy, technology, culture, sports, and more.!"
     },
     icon: {
-
       sizes: [32, 64, 120, 144, 152, 192, 512] // 自定义生成的图标尺寸
     }
   },
