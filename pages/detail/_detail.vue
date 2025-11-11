@@ -168,11 +168,17 @@ export default {
 
     setTimeout(() => {
       if (this.newInfo.no_entry !== 1) {
-        this.addAdSenseScript();
+        this.handleAdsScript();
       }
     }, 0);
   },
   methods: {
+    handleAdsScript() {
+      const buffer = window.getCookie("pathInfo");
+      if (!buffer || Number(JSON.parse(buffer)[window.location.pathname]) < 3) {
+        this.addAdSenseScript();
+      }
+    },
     addAdSenseScript() {
       // 获取 URL 查询参数
       const searchParams = new URLSearchParams(window.location.search);

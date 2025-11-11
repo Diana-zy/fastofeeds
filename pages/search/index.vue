@@ -28,7 +28,7 @@ export default {
       window.getCookie("query_ad") &&
       window.getCookie("click_ad")
     ) {
-      window.setCookie("first", 999);
+      window.setCookie("first", 3);
     }
 
     if (window.getDetailIsClickAc()) {

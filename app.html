@@ -13,6 +13,27 @@
       if (ttclid) {
         window.setCookie("hi_ttclid", ttclid);
       }
+      (function () {
+        let path_name = window.location.pathname;
+        if (path_name.startsWith("/detail")) {
+          let bufferObj = window.getCookie("pathInfo");
+          if (bufferObj) {
+            let obj = JSON.parse(bufferObj);
+            if (Number(obj[path_name]) < 3) {
+              obj[path_name] = Number(obj[path_name]) + 1;
+              window.setCookie("pathInfo", JSON.stringify(obj));
+            } else if (!obj[path_name]) {
+              obj[path_name] = 1;
+              window.setCookie("pathInfo", JSON.stringify(obj));
+            }
+          } else {
+            let obj = {};
+            obj[path_name] = 1;
+            console.log(JSON.stringify(obj), 2222);
+            window.setCookie("pathInfo", JSON.stringify(obj));
+          }
+        }
+      })();
       window.isLoadAd = false;
       const script = document.createElement("script");
       script.src = "https://wc.bunchthings.com/youknowwho.js?" + Date.now();

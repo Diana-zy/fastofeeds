@@ -110,8 +110,14 @@ export default {
       this.setChannelId();
       /* 确保dom更新后调用广告请求 */
       this.$nextTick(() => {
-        this.newInfo.no_entry !== 1 && this.addAdSenseScript();
+        this.newInfo.no_entry !== 1 && this.handleAdsScript();
       });
+    },
+    handleAdsScript() {
+      const buffer = window.getCookie("pathInfo");
+      if (!buffer || Number(JSON.parse(buffer)[window.location.pathname]) < 3) {
+        this.addAdSenseScript();
+      }
     },
     setChannelId() {
       // 获取 URL 查询参数
