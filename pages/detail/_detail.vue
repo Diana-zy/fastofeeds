@@ -149,7 +149,7 @@ export default {
     }
   },
   mounted: function () {
-    window.setCookie("mounted", 1);
+    window.handleRequestAdByChannel("mounted", 1);
     // 获取 URL 查询参数
     const searchParams = new URLSearchParams(window.location.search);
     // AdSense 配置参数
@@ -233,7 +233,7 @@ export default {
             if (response) {
               window.trackEventToPixel("D_C_AC");
               window.pushEventParamsToGtm("C_AC");
-              window.setCookie("query_ad", 1);
+              window.handleRequestAdByChannel("query_ad", 1);
               try {
                 let numberOfKeys = 0;
                 let concatenatedKeys = "miss";

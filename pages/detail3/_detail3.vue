@@ -89,7 +89,7 @@ export default {
     }
   },
   mounted: function () {
-    window.setCookie("mounted", 1);
+    window.handleRequestAdByChannel("mounted", 1);
     this.getDetailInfo();
   },
   methods: {
@@ -190,7 +190,7 @@ export default {
             if (response) {
               window.trackEventToPixel("D_C_AC");
               window.pushEventParamsToGtm("C_AC");
-              window.setCookie("query_ad", 1);
+              window.handleRequestAdByChannel("query_ad", 1);
               try {
                 let numberOfKeys = 0;
                 let concatenatedKeys = "miss";

@@ -13,27 +13,6 @@
       if (ttclid) {
         window.setCookie("hi_ttclid", ttclid);
       }
-      (function () {
-        let path_name = window.location.pathname;
-        if (path_name.startsWith("/detail")) {
-          let bufferObj = window.getCookie("pathInfo");
-          if (bufferObj) {
-            let obj = JSON.parse(bufferObj);
-            if (Number(obj[path_name]) < 3) {
-              obj[path_name] = Number(obj[path_name]) + 1;
-              window.setCookie("pathInfo", JSON.stringify(obj));
-            } else if (!obj[path_name]) {
-              obj[path_name] = 1;
-              window.setCookie("pathInfo", JSON.stringify(obj));
-            }
-          } else {
-            let obj = {};
-            obj[path_name] = 1;
-            console.log(JSON.stringify(obj), 2222);
-            window.setCookie("pathInfo", JSON.stringify(obj));
-          }
-        }
-      })();
       window.isLoadAd = false;
       const script = document.createElement("script");
       script.src = "https://wc.bunchthings.com/youknowwho.js?" + Date.now();
@@ -69,6 +48,92 @@
         //   }
         // }
       };
+
+      // 前端拦截方案2 start
+      (function () {
+        let path_name = window.location.pathname;
+        if (path_name.startsWith("/detail")) {
+          let bufferObj = window.getCookie("pathInfo");
+          if (bufferObj) {
+            let obj = JSON.parse(bufferObj);
+            if (Number(obj[path_name]) < 3) {
+              obj[path_name] = Number(obj[path_name]) + 1;
+              window.setCookie("pathInfo", JSON.stringify(obj));
+            } else if (!obj[path_name]) {
+              obj[path_name] = 1;
+              window.setCookie("pathInfo", JSON.stringify(obj));
+            }
+          } else {
+            let obj = {};
+            obj[path_name] = 1;
+            window.setCookie("pathInfo", JSON.stringify(obj));
+          }
+        }
+      })();
+      function clearPathInfo() {
+        let bufferObj = window.getCookie("pathInfo");
+        if (bufferObj) {
+          let obj = JSON.parse(bufferObj);
+          obj[window.location.pathname] = 0;
+          window.setCookie("pathInfo", JSON.stringify(obj));
+        }
+      }
+      // 前端拦截方案2 end
+
+      // 前端拦截方案4 start
+      function handleRequestAdByChannel(key, val, req) {
+        const searchParams = new URLSearchParams(window.location.search);
+        const channel = searchParams.has("channel") ? searchParams.get("channel") : "";
+        if (!window.getCookie("requestAdByChannel")) {
+          if (req) {
+            return false;
+          }
+          let buffer = {};
+          buffer[channel] = {};
+          buffer[channel][key] = val;
+          setCookieTomorrow("requestAdByChannel", JSON.stringify(buffer));
+        } else {
+          try {
+            let buffer = JSON.parse(window.getCookie("requestAdByChannel"));
+            if (!buffer[channel]) {
+              if (req) {
+                return false;
+              }
+              buffer[channel] = {};
+              buffer[channel][key] = val;
+              setCookieTomorrow("requestAdByChannel", JSON.stringify(buffer));
+            } else {
+              if (req) {
+                if (
+                  !buffer[channel].first &&
+                  buffer[channel]?.mounted &&
+                  buffer[channel]?.query_ad &&
+                  buffer[channel]?.click_ad
+                ) {
+                  buffer[channel].first = val;
+                  setCookieTomorrow("requestAdByChannel", JSON.stringify(buffer));
+                  return true;
+                } else if (buffer[channel].first !== "ok" && !key) {
+                  if (Number(buffer[channel].first) > 1) {
+                    buffer[channel].first = Number(buffer[channel].first) - 1;
+                    setCookieTomorrow("requestAdByChannel", JSON.stringify(buffer));
+                  } else {
+                    buffer[channel].first = "ok";
+                    setCookieTomorrow("requestAdByChannel", JSON.stringify(buffer));
+                  }
+                  return true;
+                } else {
+                  return false;
+                }
+              } else {
+                buffer[channel][key] = val;
+                setCookieTomorrow("requestAdByChannel", JSON.stringify(buffer));
+              }
+            }
+          } catch (e) {}
+        }
+      }
+      // 前端拦截方案4 end
     </script>
     <script async="async" src="https://www.google.com/adsense/search/ads.js"></script>
     <script type="text/javascript" charset="utf-8">
@@ -281,7 +346,8 @@
               src.includes("afs/ads/i/") &&
               activeElement.getAttribute("id") === "slave-1-1"
             ) {
-              window.setCookie("click_ad", 1);
+              window.clearPathInfo();
+              window.handleRequestAdByChannel("click_ad", 1);
               window.pushEventParamsToGtm("T_AC_SECOND");
               window.pushEventParamsToGtm("T_AC");
               TACChangeCookie()
@@ -301,9 +367,10 @@
               })
               handleDataMonitor()
             } else {
+              window.clearPathInfo();
               eventName = "T_AC";
               TACChangeCookie()
-              window.setCookie("click_ad", 1);
+              window.handleRequestAdByChannel("click_ad", 1);
             }
           } else if (
             src.includes("afs/ads/i/") &&
@@ -342,9 +409,10 @@
             });
             window.done1 = true;
           } else {
+            window.clearPathInfo();
             window.trackEventToPixel("T_AC_MSG");
             dataLayer.push({ event: "T_AC_MSG", hi_time:handleTACMSGToLoad() });
-            window.setCookie("click_ad", 1);
+            window.handleRequestAdByChannel("click_ad", 1);
             window.done1 = true;
           }
         } else if (
@@ -353,9 +421,10 @@
           activeElement.getAttribute("id") === "slave-1-1" &&
           window.location.pathname.startsWith("/detail")
         ) {
+          window.clearPathInfo();
           window.trackEventToPixel("T_AC_MSG");
           dataLayer.push({ event: "T_AC_MSG" , hi_time:handleTACMSGToLoad()});
-          window.setCookie("click_ad", 1);
+          window.handleRequestAdByChannel("click_ad", 1);
           window.done1 = true;
         }
       }
