@@ -80,8 +80,8 @@
       }
       // 前端拦截方案2 end
 
-      // 前端拦截方案4 start
-      function handleRequestAdByChannel(key, val, req) {
+      // 前端拦截方案4 start isRepeat (是否可以重走全流程，触发)
+      function handleRequestAdByChannel(key, val, req,isRepeat = false) {
         const searchParams = new URLSearchParams(window.location.search);
         const channel = searchParams.has("channel") ? searchParams.get("channel") : "";
         if (!window.getCookie("requestAdByChannel")) {
@@ -106,16 +106,19 @@
               if (req) {
                 if (
                   !buffer[channel].first &&
-                  buffer[channel]?.mounted &&
+                  (buffer[channel]?.mounted || isRepeat) &&
                   buffer[channel]?.query_ad &&
-                  buffer[channel]?.click_ad
+                  buffer[channel]?.click_ad && val
                 ) {
                   buffer[channel].first = val;
                   setCookieTomorrow("requestAdByChannel", JSON.stringify(buffer));
                   return true;
-                } else if (buffer[channel].first !== "ok" && !key) {
+                } else if (buffer[channel].first && buffer[channel]?.first !== "ok" && !key) {
                   if (Number(buffer[channel].first) > 1) {
                     buffer[channel].first = Number(buffer[channel].first) - 1;
+                    setCookieTomorrow("requestAdByChannel", JSON.stringify(buffer));
+                  } else if(isRepeat && buffer[channel].first){
+                    buffer[channel] = undefined;
                     setCookieTomorrow("requestAdByChannel", JSON.stringify(buffer));
                   } else {
                     buffer[channel].first = "ok";

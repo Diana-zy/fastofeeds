@@ -22,7 +22,7 @@ export default {
     };
   },
   mounted() {
-    window.handleRequestAdByChannel("first", 3, true);
+    window.handleRequestAdByChannel("first", 1, true,true);
 
     if (window.getDetailIsClickAc()) {
       window.dataLayer.push({
@@ -45,7 +45,7 @@ export default {
   methods: {
     addAdSense() {
       setTimeout(() => {
-        if (window.handleRequestAdByChannel("", "", true)) {
+        if (window.handleRequestAdByChannel("", "", true,true)) {
           window.trackEventToPixel("Q_AR");
           window.pushEventParamsToGtm("Q_AR");
           this.addAdSenseScript();
@@ -97,6 +97,9 @@ export default {
           if (response) {
             // eslint-disable-next-line no-undef
             dataLayer.push({ event: eventName, ...additionalData });
+            if(eventName === 'C_AC'){
+              window.handleRequestAdByChannel("query_ad", 1);
+            }
           }
         };
 
