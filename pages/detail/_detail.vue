@@ -164,19 +164,17 @@ export default {
       }
     }
 
+    // "同页面重复访问不点击"门控暂时停用——目前还不确定这轮投放各站点对应
+    // 的国家/渠道，阈值缺少参考数据，先无条件放行，pathInfo计数/GA4埋点照常
+    // 采集，后续看数据再决定是否重新启用（保留下面这行注释掉的门控逻辑）
+    // const buffer = window.getCookie("pathInfo");
+    // if (!buffer || Number(JSON.parse(buffer)[window.location.pathname]) < 3) {
     setTimeout(() => {
-      if (this.newInfo.no_entry !== 1) {
-        this.handleAdsScript();
-      }
+      this.newInfo.no_entry !== 1 && this.addAdSenseScript();
     }, 0);
+    // }
   },
   methods: {
-    handleAdsScript() {
-      const buffer = window.getCookie("pathInfo");
-      if (!buffer || Number(JSON.parse(buffer)[window.location.pathname]) < 3) {
-        this.addAdSenseScript();
-      }
-    },
     addAdSenseScript() {
       // 获取 URL 查询参数
       const searchParams = new URLSearchParams(window.location.search);
