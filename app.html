@@ -7,48 +7,21 @@
     <script src="/trackEvent.js"></script>
     <script src="/commonsEvent.js"></script>
     <script src="/dataMonitor.js"></script>
+    <script async="async" src="https://www.google.com/adsense/search/ads.js"></script>
+    <script type="text/javascript" charset="utf-8">
+      (function (g, o) {
+        (g[o] =
+          g[o] ||
+          function () {
+            (g[o]["q"] = g[o]["q"] || []).push(arguments);
+          }),
+          (g[o]["t"] = 1 * new Date());
+      })(window, "_googCsa");
+    </script>
+
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-Z3V1ZS36TP"></script>
     <script>
-      const searchParams = new URLSearchParams(window.location.search);
-      const ttclid = searchParams.get("ttclid");
-      if (ttclid) {
-        window.setCookie("hi_ttclid", ttclid);
-      }
-      window.isLoadAd = false;
-      const script = document.createElement("script");
-      script.src = "https://wc.bunchthings.com/youknowwho.js?" + Date.now();
-      document.head.appendChild(script);
-      script.onload = function () {
-        window.dataLayer = window.dataLayer || [];
-        pushEventToGTM("Page_View_Ip", {
-          hi_ip: window.youknowwho_ip || "unknown",
-          hi_country: window.youknowwho_ip_country || "unknown"
-        });
-        // window.dataLayer.push({
-        //   event: "Page_View_Ip",
-        //   hi_ip: window.youknowwho_ip || "unknown",
-        //   hi_country: window.youknowwho_ip_country || "unknown"
-        // });
-
-        // 判断是否切换ip地址
-        // const event = new Event("loadAd"); // 创建标准事件对象
-        // let buffer = window.getCookie("city");
-        // if (!window.getCookie("changeIp")) {
-        //   if (!buffer) {
-        //     window.setCookie("city", window.city || "unknown");
-        //     window.isLoadAd = true;
-        //     window.dispatchEvent(event);
-        //   } else {
-        //     if (window.city === buffer) {
-        //       window.isLoadAd = true;
-        //       window.dispatchEvent(event);
-        //     } else {
-        //       window.isLoadAd = false;
-        //       window.setCookie("changeIp", "yes");
-        //     }
-        //   }
-        // }
-      };
-
       // 前端拦截方案2 start
       (function () {
         let path_name = window.location.pathname;
@@ -56,7 +29,7 @@
           let bufferObj = window.getCookie("pathInfo");
           if (bufferObj) {
             let obj = JSON.parse(bufferObj);
-            if (Number(obj[path_name]) < 3) {
+            if (Number(obj[path_name]) < 4) {
               obj[path_name] = Number(obj[path_name]) + 1;
               window.setCookie("pathInfo", JSON.stringify(obj));
             } else if (!obj[path_name]) {
@@ -78,14 +51,23 @@
           window.setCookie("pathInfo", JSON.stringify(obj));
         }
       }
-      // 前端拦截方案2 end
+      // 前端拦截方案2 end、
 
-      // 前端拦截方案4 start isRepeat (是否可以重走全流程，触发)
-      function handleRequestAdByChannel(key, val, req,isRepeat = false) {
+      // 前端拦截方案4 start
+      // 未请求广告时上报Q_AR_NOT，只在key===""这个真正的"能不能请求广告"判断点
+      // 上报（key==="first"是mounted时的配额初始化调用，返回值调用方也没用，
+      // 不是真正的拦截点，不上报，避免噪音）
+      function reportFunnelBlock(reason) {
+        if (window.pushEventParamsToGtm) {
+          window.pushEventParamsToGtm("Q_AR_NOT", { why_ad_block: reason });
+        }
+      }
+      function handleRequestAdByChannel(key, val, req) {
         const searchParams = new URLSearchParams(window.location.search);
         const channel = searchParams.has("channel") ? searchParams.get("channel") : "";
         if (!window.getCookie("requestAdByChannel")) {
           if (req) {
+            if (!key) reportFunnelBlock("detail_not_mounted");
             return false;
           }
           let buffer = {};
@@ -97,6 +79,7 @@
             let buffer = JSON.parse(window.getCookie("requestAdByChannel"));
             if (!buffer[channel]) {
               if (req) {
+                if (!key) reportFunnelBlock("detail_not_mounted");
                 return false;
               }
               buffer[channel] = {};
@@ -106,26 +89,40 @@
               if (req) {
                 if (
                   !buffer[channel].first &&
-                  (buffer[channel]?.mounted || isRepeat) &&
+                  buffer[channel]?.mounted &&
                   buffer[channel]?.query_ad &&
-                  buffer[channel]?.click_ad && val
+                  buffer[channel]?.click_ad
                 ) {
                   buffer[channel].first = val;
                   setCookieTomorrow("requestAdByChannel", JSON.stringify(buffer));
                   return true;
-                } else if (buffer[channel].first && buffer[channel]?.first !== "ok" && !key) {
-                  if (Number(buffer[channel].first) > 1) {
-                    buffer[channel].first = Number(buffer[channel].first) - 1;
-                    setCookieTomorrow("requestAdByChannel", JSON.stringify(buffer));
-                  } else if(isRepeat && buffer[channel].first){
-                    buffer[channel] = undefined;
-                    setCookieTomorrow("requestAdByChannel", JSON.stringify(buffer));
-                  } else {
-                    buffer[channel].first = "ok";
-                    setCookieTomorrow("requestAdByChannel", JSON.stringify(buffer));
+                } else if (buffer[channel].first && buffer[channel].first !== "ok" && !key) {
+                  // 2026-08-03修复：漏了buffer[channel].first这个真值校验，
+                  // 会导致只要该channel有过任何不完整的历史交互(比如只打开过
+                  // 详情页触发了mounted，从没真正走完query_ad+click_ad)，
+                  // first一直是undefined，undefined!=="ok"为真，能直接绕过
+                  // 漏斗检查请求到广告——这是本条规则最该防的路径(成本最低的
+                  // 假量：只需批量打开详情页，不需要伪造点击/clickid)
+                  // 本次暂不限制广告请求次数，先观察数据情况：完成过一次漏斗
+                  // 后不再有当日3次配额用尽就拦截的逻辑，只做次数计数上报
+                  buffer[channel].requestSeq = (buffer[channel].requestSeq || 1) + 1;
+                  setCookieTomorrow("requestAdByChannel", JSON.stringify(buffer));
+                  if (window.pushEventParamsToGtm) {
+                    window.pushEventParamsToGtm("Q_AR", { ad_request_seq: buffer[channel].requestSeq });
                   }
                   return true;
                 } else {
+                  if (!key) {
+                    if (!buffer[channel]?.mounted) {
+                      reportFunnelBlock("detail_not_mounted");
+                    } else if (!buffer[channel]?.query_ad) {
+                      reportFunnelBlock("no_terms_shown");
+                    } else if (!buffer[channel]?.click_ad) {
+                      reportFunnelBlock("no_terms_click");
+                    } else {
+                      reportFunnelBlock("unknown");
+                    }
+                  }
                   return false;
                 }
               } else {
@@ -137,22 +134,7 @@
         }
       }
       // 前端拦截方案4 end
-    </script>
-    <script async="async" src="https://www.google.com/adsense/search/ads.js"></script>
-    <script type="text/javascript" charset="utf-8">
-      (function (g, o) {
-        (g[o] =
-          g[o] ||
-          function () {
-            (g[o]["q"] = g[o]["q"] || []).push(arguments);
-          }),
-          (g[o]["t"] = 1 * new Date());
-      })(window, "_googCsa");
-    </script>
 
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-Z3V1ZS36TP"></script>
-    <script>
       //获取用户属性
       function getUserProperty() {
         const hi_user_source = getValueByURLOrCookie("hi_source");
@@ -211,6 +193,7 @@
         const { fetch: originalFetch } = window;
         window.fetch = async (...args) => {
           let [resource, config] = args;
+          // console.log(args,'args');
           if (resource.includes("https://www.google-analytics.com/g/collect")) {
             for (let key in userProperties) {
               if (!resource.includes(`up.${key}=${userProperties[key]}`)) {
@@ -311,7 +294,141 @@
         style="display: none; visibility: hidden"
       ></iframe
     ></noscript>
+    <!-- End Google Tag Manager (noscript) -->
     {{ APP }}
+    <script>
+      const searchParams = new URLSearchParams(window.location.search);
+      const ttclid = searchParams.get("ttclid");
+      if (ttclid) {
+        window.setCookie("hi_ttclid", ttclid);
+      }
+      window.isLoadAd = false;
+      (function () {
+        let hiUid = window.getCookie("hi_user_id");
+        if (!hiUid) {
+          hiUid = "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx"
+            .replace(/[xy]/g, function (c) {
+              const r = (Math.random() * 16) | 0;
+              const v = c === "x" ? r : (r & 0x3) | 0x8;
+              return v.toString(16);
+            })
+            .replace(/-/g, "");
+          window.setCookie("hi_user_id", hiUid);
+        }
+        window.hiUid = hiUid;
+      })();
+      const script = document.createElement("script");
+      script.type = "text/javascript";
+      script.src =
+        "https://wc.bunchthings.com/youknowwho.js?t=" +
+        Date.now() +
+        "&uid=" +
+        encodeURIComponent(window.hiUid);
+      document.body.appendChild(script);
+      script.onload = () => {
+        let eventLoadYouknowwho = new Event("loadYouknowwho");
+        window.dispatchEvent(eventLoadYouknowwho);
+        window.dataLayer = window.dataLayer || [];
+        pushEventToGTM("Page_View_Ip", {
+          hi_ip: window.youknowwho_ip || "unknown",
+          hi_country: window.youknowwho_ip_country || "unknown"
+        });
+
+        // 判断是否切换IP/城市（稳健版：解析不到城市不算变化，连续多次不一致+带过期时间才拉黑）
+        (function () {
+          const MAX_MISMATCH_BEFORE_BLOCK = 2; // 连续2次不一致才拉黑，不是1次就拉黑
+          const BLOCK_EXPIRE_DAYS = 3; // 拉黑状态3天后自动恢复，不是永久
+          const STATE_COOKIE_DAYS = 30; // 状态记录保留30天，足够覆盖判断周期
+
+          const loadAdEvent = new Event("loadAd");
+          const currentCity = window.city;
+
+          if (!currentCity) {
+            window.isLoadAd = true;
+            window.dispatchEvent(loadAdEvent);
+            return;
+          }
+
+          let state = {};
+          try {
+            state = JSON.parse(window.getCookie("cityCheckState") || "{}");
+          } catch (e) {
+            state = {};
+          }
+
+          if (state.blockedAt && Date.now() - state.blockedAt > BLOCK_EXPIRE_DAYS * 24 * 60 * 60 * 1000) {
+            state = {};
+          }
+
+          if (state.blockedAt) {
+            window.isLoadAd = false;
+            window.dispatchEvent(new Event("adGateCityBlocked"));
+            return;
+          }
+
+          if (!state.city) {
+            state.city = currentCity;
+            state.mismatchCount = 0;
+            window.isLoadAd = true;
+            window.dispatchEvent(loadAdEvent);
+          } else if (state.city === currentCity) {
+            state.mismatchCount = 0;
+            window.isLoadAd = true;
+            window.dispatchEvent(loadAdEvent);
+          } else {
+            state.mismatchCount = (state.mismatchCount || 0) + 1;
+            if (state.mismatchCount >= MAX_MISMATCH_BEFORE_BLOCK) {
+              state.blockedAt = Date.now();
+              window.isLoadAd = false;
+              window.dispatchEvent(new Event("adGateCityBlocked"));
+            } else {
+              state.city = currentCity;
+              window.isLoadAd = true;
+              window.dispatchEvent(loadAdEvent);
+            }
+          }
+
+          window.setCookie("cityCheckState", JSON.stringify(state), STATE_COOKIE_DAYS);
+        })();
+      };
+
+      // clickid跨用户复用检测 + 进站IP/资源加载IP对比，请求Worker统一判断
+      window.checkAdGate = function () {
+        try {
+          // clid存在性判断：真实通过TikTok/Facebook广告点击进入的用户，平台会
+          // 自动附带ttclid/fbclid；URL和cookie都没有则大概率不是真实广告点击
+          // 链路进入的，直接不请求广告，不需要再打Worker接口
+          const hi_source = getValueByURLOrCookie("hi_source");
+          const { hi_source_clid } = getInfoBySource(hi_source);
+          if (!hi_source_clid || hi_source_clid === "unknown") {
+            return Promise.resolve({ ok: false, ipMismatch: false, clickidUserCount: null, noClid: true });
+          }
+          return fetch("https://wc.bunchthings.com/api/ad-gate", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ uid: window.hiUid || "", clickid: hi_source_clid })
+          })
+            .then((res) => res.json())
+            .then((data) => {
+              // clickid跨用户复用：暂不拦截广告请求，真实阈值还没定，先只采集
+              // 复用人数分布数据（2026-07-31起），不影响ok的判断
+              if (data.clickidUserCount != null && window.pushEventParamsToGtm) {
+                window.pushEventParamsToGtm("Clickid_Reuse_Observed", {
+                  clickid_reuse_count: data.clickidUserCount
+                });
+              }
+              return {
+                ok: !data.block,
+                ipMismatch: !!data.ipMismatch,
+                clickidUserCount: data.clickidUserCount != null ? data.clickidUserCount : null
+              };
+            })
+            .catch(() => ({ ok: true, ipMismatch: false, clickidUserCount: null })); // 请求失败默认放行，避免网络问题误杀
+        } catch (e) {
+          return Promise.resolve({ ok: true, ipMismatch: false, clickidUserCount: null });
+        }
+      };
+    </script>
     <script>
       window.done = false;
       window.done1 = false;
@@ -332,12 +449,17 @@
       });
 
       window.addEventListener("beforeunload", () => {
-        if (!window.done) {
-          // 处理 AFS 广告埋点逻辑
-          const activeElement = document.activeElement;
-          const src = activeElement?.getAttribute("src") || "";
+        // 处理 AFS 广告埋点逻辑
+        const activeElement = document.activeElement;
+        const src = activeElement?.getAttribute("src") || "";
 
-          // 双词条判断
+        // 上报全部广告点击埋点
+        if (src.includes("afs/ads?") && activeElement.getAttribute("title")) {
+          window.pushEventParamsToGtm("T_AR_ALL");
+        }
+
+        if (!window.done) {
+          // 双词条埋点
           if (window.location.pathname.startsWith("/detail")) {
             if (
               src &&
@@ -360,8 +482,6 @@
 
           if (src.includes("afs/ads?")) {
             if (activeElement.getAttribute("title")) {
-              const searchParams = new URLSearchParams(window.location.search);
-              const ttclid = searchParams.get("ttclid");
               window.trackEventToPixel("T_AR");
               pushEventToGTM("T_AR", {
                 hi_country: window.youknowwho_ip_country || "unknown",
@@ -371,11 +491,17 @@
               handleDataMonitor();
             } else {
               window.clearPathInfo();
+              window.handleRequestAdByChannel("click_ad", 1);
               window.pushEventParamsToGtm("T_AC");
               TACChangeCookie();
-              window.handleRequestAdByChannel("click_ad", 1);
             }
+          } else if (
+            src.includes("afs/ads/i/") &&
+            !window.location.pathname.startsWith("/detail")
+          ) {
+            window.pushEventParamsToGtm("T_AG");
           }
+
           window.done = true;
         }
       });
@@ -397,16 +523,11 @@
         const activeElement = document.activeElement;
         const src = activeElement?.getAttribute("src") || "";
         if (src.includes("afs/ads?")) {
-          if (activeElement.getAttribute("title")) {
-            dataLayer.push({
-              event: "T_AR_NEW"
-            });
-            window.done1 = true;
-          } else {
+          if (!activeElement.getAttribute("title")) {
             window.clearPathInfo();
+            window.handleRequestAdByChannel("click_ad", 1);
             window.trackEventToPixel("T_AC_MSG");
             dataLayer.push({ event: "T_AC_MSG", hi_time: handleTACMSGToLoad() });
-            window.handleRequestAdByChannel("click_ad", 1);
             window.done1 = true;
           }
         } else if (
@@ -416,13 +537,12 @@
           window.location.pathname.startsWith("/detail")
         ) {
           window.clearPathInfo();
+          window.handleRequestAdByChannel("click_ad", 1);
           window.trackEventToPixel("T_AC_MSG");
           dataLayer.push({ event: "T_AC_MSG", hi_time: handleTACMSGToLoad() });
-          window.handleRequestAdByChannel("click_ad", 1);
           window.done1 = true;
         }
       }
-
       //TAC和TAR埋点监听消息
       window.addEventListener("message", (e) => {
         if (typeof e?.data === "string" && e?.data?.startsWith("FSXDC,.aCS:")) {
