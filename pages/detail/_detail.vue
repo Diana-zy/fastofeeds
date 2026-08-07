@@ -5,15 +5,8 @@
       <h1 class="article-title">{{ newInfo.name }}</h1>
       <div class="news-detail">{{ newInfo.first_paragraph }}</div>
       <div id="relatedsearches1"> </div>
-      <NuxtImg
-        format="auto"
-        fit="cover"
-        width="900"
-        :src="newInfo.cover"
-        :alt="newInfo.name"
-        class="article-img"
-        preload
-      />
+      <!-- 2026-08-07：投手不想要落地页配图，去掉正文里的封面图展示，
+           og:image meta标签(分享预览用)不受影响，保留 -->
       <!-- eslint-disable vue/no-v-html -->
       <div class="news-detail">
         <template v-for="(item, index) in contentItems">
@@ -107,7 +100,12 @@ export default {
   computed: {
     contentItems() {
       const self = this;
-      const parts = this.newInfo.content.split(/(<p[^>]*>.*?<\/p>)/gs);
+      // 2026-08-07：投手不想要落地页配图——正文插图(body_image)不是单独的
+      // Vue元素，是pipeline_3_article_publish.py发布时直接拼进content这段
+      // HTML字符串里的<img>标签，只能在渲染前用正则过滤掉，跟去封面同样是
+      // 前端展示层面处理，不改生成/发布流程。
+      const contentNoImg = (this.newInfo.content || "").replace(/<img\b[^>]*\/?>/gi, "");
+      const parts = contentNoImg.split(/(<p[^>]*>.*?<\/p>)/gs);
       let charCount = 0;
       const items = [];
 
