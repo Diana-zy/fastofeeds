@@ -48,8 +48,9 @@ main {
   line-height: 26px;
   margin-bottom: 1em;
   * {
-    font-family: "rs",
-      "Rubik,-apple-system,Framedcn,Helvetica Neue,Condensed,DisplayRegular,Helvetica,Arial,PingFang SC,Hiragino Sans GB,WenQuanYi Micro Hei,Microsoft Yahei,sans-serif" !important;
+    font-family: "rs", Rubik, -apple-system, Framedcn, "Helvetica Neue", Condensed,
+      DisplayRegular, Helvetica, Arial, "PingFang SC", "Hiragino Sans GB",
+      "WenQuanYi Micro Hei", "Microsoft Yahei", sans-serif !important;
   }
   img {
     width: 100% !important;
