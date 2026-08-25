@@ -238,7 +238,9 @@
                     buffer[getHostname() + "_first"] = hi_source_clid;
                   }
                 }
-                pushEventToGTM("Detail_pv_user");
+                if (typeof window.pushEventToGTM === "function") {
+                  window.pushEventToGTM("Detail_pv_user");
+                }
                 setCookieTomorrow("detailPvUser", JSON.stringify(buffer));
               }
             } catch (e) {}
@@ -249,7 +251,9 @@
               time: new Date().getTime()
             };
             buffer[getHostname() + "_first"] = hi_source_clid;
-            pushEventToGTM("Detail_pv_user");
+            if (typeof window.pushEventToGTM === "function") {
+              window.pushEventToGTM("Detail_pv_user");
+            }
             setCookieTomorrow("detailPvUser", JSON.stringify(buffer));
           }
         }
@@ -330,10 +334,12 @@
         let eventLoadYouknowwho = new Event("loadYouknowwho");
         window.dispatchEvent(eventLoadYouknowwho);
         window.dataLayer = window.dataLayer || [];
-        pushEventToGTM("Page_View_Ip", {
-          hi_ip: window.youknowwho_ip || "unknown",
-          hi_country: window.youknowwho_ip_country || "unknown"
-        });
+        if (typeof window.pushEventToGTM === "function") {
+          window.pushEventToGTM("Page_View_Ip", {
+            hi_ip: window.youknowwho_ip || "unknown",
+            hi_country: window.youknowwho_ip_country || "unknown"
+          });
+        }
 
         // 判断是否切换IP/城市（稳健版：解析不到城市不算变化，连续多次不一致+带过期时间才拉黑）
         (function () {
@@ -441,11 +447,13 @@
         if (window.tarFired) return;
         window.tarFired = true;
         window.trackEventToPixel("T_AR");
-        pushEventToGTM("T_AR", {
-          hi_country: window.youknowwho_ip_country || "unknown",
-          hi_ip: window.youknowwho_ip || "unknown",
-          hi_ttclid: ttclid || window.getCookie("hi_ttclid") || "unknown"
-        });
+        if (typeof window.pushEventToGTM === "function") {
+          window.pushEventToGTM("T_AR", {
+            hi_country: window.youknowwho_ip_country || "unknown",
+            hi_ip: window.youknowwho_ip || "unknown",
+            hi_ttclid: ttclid || window.getCookie("hi_ttclid") || "unknown"
+          });
+        }
         handleDataMonitor();
       }
 
