@@ -611,12 +611,42 @@
         }
         if (!isDebug) return;
 
+        // 日志实时写入localStorage（同步操作，哪怕页面几毫秒后就被
+        // 跳转销毁，只要事件处理函数跑到了这一行，日志就已经落盘），
+        // 这样真实跳到广告主外部网站这种"页面说没就没"的场景，
+        // 点返回回来之后依然能看到跳转前最后一刻发生了什么
+        var LOG_KEY = "hi_debug_log_v1";
+        var historyLines = [];
+        try {
+          historyLines = JSON.parse(localStorage.getItem(LOG_KEY) || "[]");
+        } catch (e) {}
+
         var panel = document.createElement("div");
         panel.style.cssText =
           "position:fixed;bottom:0;left:0;right:0;max-height:45vh;overflow-y:auto;" +
           "background:rgba(0,0,0,0.88);color:#0f0;font:11px/1.4 monospace;" +
           "z-index:2147483647;padding:6px;white-space:pre-wrap;pointer-events:auto;";
         document.body.appendChild(panel);
+
+        var clearBtn = document.createElement("div");
+        clearBtn.textContent = "[清空历史日志]";
+        clearBtn.style.cssText = "color:#f66;text-decoration:underline;margin-bottom:4px;";
+        clearBtn.addEventListener("click", function () {
+          historyLines = [];
+          try {
+            localStorage.removeItem(LOG_KEY);
+          } catch (e) {}
+          panel.innerHTML = "";
+          panel.appendChild(clearBtn);
+        });
+        panel.appendChild(clearBtn);
+
+        // 先把之前保存的历史日志渲染出来
+        historyLines.forEach(function (text) {
+          var line = document.createElement("div");
+          line.textContent = text;
+          panel.appendChild(line);
+        });
 
         function log(msg) {
           var t = new Date();
@@ -625,14 +655,23 @@
           };
           var ts =
             pad(t.getHours()) + ":" + pad(t.getMinutes()) + ":" + pad(t.getSeconds()) + "." + pad(t.getMilliseconds(), 3);
+          var text = "[" + ts + "] " + msg;
+
+          historyLines.push(text);
+          if (historyLines.length > 300) historyLines = historyLines.slice(-300);
+          try {
+            localStorage.setItem(LOG_KEY, JSON.stringify(historyLines));
+          } catch (e) {}
+
           var line = document.createElement("div");
-          line.textContent = "[" + ts + "] " + msg;
+          line.textContent = text;
           panel.appendChild(line);
           panel.scrollTop = panel.scrollHeight;
         }
 
-        log("debug ready | href=" + location.href);
+        log("=== 新页面加载 === href=" + location.href);
         log("UA=" + navigator.userAgent);
+        panel.scrollTop = panel.scrollHeight;
 
         window.addEventListener("blur", function () {
           var el = document.activeElement;
