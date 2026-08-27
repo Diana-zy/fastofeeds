@@ -592,5 +592,92 @@
         }
       });
     </script>
+    <script>
+      // 临时调试面板：排查iOS Meta内置浏览器T_AR上报问题用，
+      // 只有 ?hi_debug=1 时才生效，不影响正常用户
+      (function () {
+        if (new URLSearchParams(location.search).get("hi_debug") !== "1") return;
+
+        var panel = document.createElement("div");
+        panel.style.cssText =
+          "position:fixed;bottom:0;left:0;right:0;max-height:45vh;overflow-y:auto;" +
+          "background:rgba(0,0,0,0.88);color:#0f0;font:11px/1.4 monospace;" +
+          "z-index:2147483647;padding:6px;white-space:pre-wrap;pointer-events:auto;";
+        document.body.appendChild(panel);
+
+        function log(msg) {
+          var t = new Date();
+          var pad = function (n, l) {
+            return String(n).padStart(l || 2, "0");
+          };
+          var ts =
+            pad(t.getHours()) + ":" + pad(t.getMinutes()) + ":" + pad(t.getSeconds()) + "." + pad(t.getMilliseconds(), 3);
+          var line = document.createElement("div");
+          line.textContent = "[" + ts + "] " + msg;
+          panel.appendChild(line);
+          panel.scrollTop = panel.scrollHeight;
+        }
+
+        log("debug ready | href=" + location.href);
+        log("UA=" + navigator.userAgent);
+
+        window.addEventListener("blur", function () {
+          var el = document.activeElement;
+          log(
+            "blur | tag=" +
+              (el ? el.tagName : "null") +
+              " src=" +
+              (el && el.getAttribute && el.getAttribute("src")) +
+              " title=" +
+              (el && el.getAttribute && el.getAttribute("title")) +
+              " id=" +
+              (el && el.getAttribute && el.getAttribute("id"))
+          );
+          setTimeout(function () {
+            log("  -> after blur: __pendingAdClick=" + window.__pendingAdClick);
+          }, 0);
+        });
+
+        window.addEventListener("focus", function () {
+          log("focus | visibilityState=" + document.visibilityState);
+          setTimeout(function () {
+            log("  -> after focus: __pendingAdClick=" + window.__pendingAdClick);
+          }, 0);
+        });
+
+        document.addEventListener(
+          "visibilitychange",
+          function () {
+            log("visibilitychange -> " + document.visibilityState + " | __pendingAdClick=" + window.__pendingAdClick);
+          },
+          true
+        );
+
+        window.addEventListener("beforeunload", function () {
+          log("beforeunload fired");
+        });
+
+        window.addEventListener("pagehide", function (e) {
+          log("pagehide | persisted=" + e.persisted);
+        });
+
+        document.addEventListener(
+          "click",
+          function (e) {
+            var link = e.target.closest && e.target.closest("a");
+            log("click | target=" + e.target.tagName + (link ? " href=" + link.getAttribute("href") : ""));
+          },
+          true
+        );
+
+        if (typeof window.fireTAR === "function") {
+          var _origFireTAR = window.fireTAR;
+          window.fireTAR = function () {
+            log("*** fireTAR() CALLED ***");
+            return _origFireTAR.apply(this, arguments);
+          };
+        }
+      })();
+    </script>
   </body>
 </html>
