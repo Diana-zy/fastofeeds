@@ -594,9 +594,22 @@
     </script>
     <script>
       // 临时调试面板：排查iOS Meta内置浏览器T_AR上报问题用，
-      // 只有 ?hi_debug=1 时才生效，不影响正常用户
+      // 只有 ?hi_debug=1 时才生效，不影响正常用户。
+      // 用sessionStorage记住调试状态，这样从详情页跳到搜索结果页
+      // 等站内其他页面（不会带着hi_debug参数跳转）时，调试面板依然生效，
+      // 直到关闭这个浏览器标签页/会话为止
       (function () {
-        if (new URLSearchParams(location.search).get("hi_debug") !== "1") return;
+        var isDebug = new URLSearchParams(location.search).get("hi_debug") === "1";
+        if (isDebug) {
+          try {
+            sessionStorage.setItem("hi_debug", "1");
+          } catch (e) {}
+        } else {
+          try {
+            isDebug = sessionStorage.getItem("hi_debug") === "1";
+          } catch (e) {}
+        }
+        if (!isDebug) return;
 
         var panel = document.createElement("div");
         panel.style.cssText =
