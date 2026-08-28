@@ -459,6 +459,13 @@
 
       // 监听失去焦点事件
       window.addEventListener("blur", () => {
+        // 每次新的blur，先无条件作废上一次遗留的待确认状态——
+        // 焦点已经转移到别的目标了（不管这次是广告还是词条），
+        // 上一次点的广告是不是真的跳转出去，已经没法再确认了，
+        // 避免之后的hidden事件被张冠李戴地算到上一次点击头上。
+        // 如果这次blur本身也是真广告点击，下面会立刻重新设为true。
+        window.__pendingAdClick = false;
+
         const activeElement = document.activeElement;
         const activeSrc = activeElement.getAttribute("src");
 
@@ -477,13 +484,21 @@
         }
       });
 
-      // 焦点回来了但页面没有经历过hidden，说明只是碰了一下又划回来了，
-      // 不是真的点广告离开，清掉待定状态，避免之后被无关的hidden事件误触发
-      window.addEventListener("focus", () => {
-        if (window.__pendingAdClick && document.visibilityState === "visible") {
+      // 用户在我们自己页面上真实点了点什么（比如点了别的站内文章链接），
+      // 说明没有跟着广告跳走，作废待确认状态。
+      // 注意：这里特意不用focus事件做这个判断——真机实测过，iOS上
+      // 点真实广告跳转时，focus会在visibilitychange变hidden前几毫秒
+      // 抢先触发一次，会把刚设置好的__pendingAdClick提前误清空，
+      // 导致真实点击反而漏报。而真实的广告点击发生在跨域iframe内部，
+      // 不会在我们自己的document上产生click事件，所以用click做取消
+      // 信号不会有这个竞态问题。
+      document.addEventListener(
+        "click",
+        () => {
           window.__pendingAdClick = false;
-        }
-      });
+        },
+        true
+      );
 
       window.addEventListener("beforeunload", () => {
         // 处理 AFS 广告埋点逻辑
