@@ -560,17 +560,16 @@
             window.tarFired = false;
             document.body.focus();
           }, 0);
-        } else if (
-          document.visibilityState === "hidden" &&
-          window.__pendingAdClick &&
-          Date.now() - window.__pendingAdClickAt < 10000
-        ) {
+        } else if (document.visibilityState === "hidden" && window.__pendingAdClick) {
           // 兜底路径：iOS上Meta内置浏览器点击广告后beforeunload不一定触发，
           // 靠blur记录的状态+页面变hidden判断用户是不是点广告离开了，
           // fireTAR内部有去重，不会和beforeunload重复上报。
-          // 窗口原定3秒，真机实测发现点击真实广告到页面真正hidden之间
-          // 实际耗时在5秒左右（Google广告跳转链路本身的耗时），3秒
-          // 会把正常的真实点击也漏判，改成10秒留出安全余量
+          // 原来这里有一个时间窗口（3秒→10秒），但真机实测发现从点击
+          // 广告到页面真正hidden之间的耗时受网速影响，波动很大（实测
+          // 见过5秒、也见过25秒），固定窗口不管设多大都可能漏判真实
+          // 点击，所以去掉时间限制——不再靠"多久以内"来判断，而是靠
+          // __pendingAdClick有没有被中途的click/新blur取消掉来判断，
+          // 边界更清楚，也不会因为网速慢而漏报
           fireTAR();
           window.__pendingAdClick = false;
         }
